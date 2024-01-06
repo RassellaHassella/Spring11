@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.modelmapper.ModelMapper;
 
 @Configuration
 @EnableWebSecurity
@@ -28,15 +29,20 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .csrf().disable()
                 .authorizeRequests()
+                .antMatchers("/user/**").hasAnyRole("USER", "ADMIN")
                 .antMatchers("/admin/**").hasRole("ADMIN")
-                .antMatchers("/", "/index", "/new").permitAll()
+                .antMatchers("/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .formLogin().successHandler(successUserHandler)
-                .permitAll()
+                .formLogin().loginPage("/login")
+                .successHandler(successUserHandler).permitAll()
                 .and()
                 .logout()
                 .permitAll()
-                .logoutSuccessUrl("/");
+                .logoutSuccessUrl("/login").permitAll();
+    }
+    @Bean
+    public ModelMapper getModelMapper(){
+        return new ModelMapper();
     }
 }

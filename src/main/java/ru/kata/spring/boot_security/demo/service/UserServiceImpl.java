@@ -1,123 +1,111 @@
 package ru.kata.spring.boot_security.demo.service;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.kata.spring.boot_security.demo.dao.RoleService;
+import ru.kata.spring.boot_security.demo.dao.RoleRepository;
 import ru.kata.spring.boot_security.demo.dao.UserDAO;
+import ru.kata.spring.boot_security.demo.dto.UserDTO;
 import ru.kata.spring.boot_security.demo.models.Role;
 import ru.kata.spring.boot_security.demo.models.User;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Service
-public class UserServiceImpl implements UserService{
+public class UserServiceImpl implements UserService {
     private UserDAO userDAO;
-    private RoleService roleService;
+    private RoleRepository roleRepository;
     private BCryptPasswordEncoder bCryptPasswordEncoder;
+    private ModelMapper modelMapper;
 
     @Autowired
-    public UserServiceImpl(UserDAO userDAO, RoleService roleService, BCryptPasswordEncoder bCryptPasswordEncoder) {
+    public UserServiceImpl(UserDAO userDAO, RoleRepository roleRepository, BCryptPasswordEncoder bCryptPasswordEncoder, ModelMapper modelMapper) {
         this.userDAO = userDAO;
-        this.roleService = roleService;
+        this.roleRepository = roleRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.modelMapper = modelMapper;
     }
-    @Transactional(readOnly = true)
+
     @Override
-    public List<User> index() {
-        List<User> users = userDAO.index();
-        for (User user : users) {
-            user.checkRole();
+    public List<UserDTO> index() {
+
+        return convertToUserDTO(userDAO.index());
+    }
+
+    private List<UserDTO> convertToUserDTO(List<User> users) {
+        List<UserDTO> usersDTO = users.stream()
+                .map(user -> modelMapper.map(user, UserDTO.class))
+                .collect(Collectors.toList());
+
+        for (int i = 0; i < usersDTO.size(); i++) {
+            usersDTO.get(i).getRoles().clear();
+            for (Role role : users.get(i).getRoles()) {
+                usersDTO.get(i).addRoles(role.getName());
+            }
         }
-        return users;
+        return usersDTO;
     }
-    @Transactional(readOnly = true)
+
     @Override
-    public User show(int id) {
-        User user = userDAO.show(id);
-        user.checkRole();
-        return user;
+    public Optional<UserDTO> show(Long id) {
+        List<User> users = userDAO.show(id);
+        if (users == null) {
+            return Optional.of(null);
+        }
+        return Optional.ofNullable(convertToUserDTO(users).get(0));
     }
+
     @Transactional
     @Override
-    public boolean save(User user) {
-        User users = userDAO.findByUsername(user.getUsername());
-        List<Role> roles= roleService.findAll();
-
+    public Optional<UserDTO> save(User user) {
+        User users = userDAO.findByEmail(user.getEmail());
         if (users != null) {
-            return false;
+            return Optional.ofNullable(null);
         }
 
-        if (roles.isEmpty()) {
-            Role roles1 = new Role(1L, "ROLE_ADMIN");
-            Role roles2 = new Role(2L, "ROLE_USER");
-            user.setRoles(new HashSet<>(Set.of(roles1, roles2)));
-            roleService.save(roles1);
-            roleService.save(roles2);
-        } else if (!(user.getUser() && user.getAdmin())) {
-            user.setRoles(new HashSet<>(Set.of(roles.get(1))));
+        if (user.getPassword() == null) {
+            user.setPassword(bCryptPasswordEncoder.encode(user.getRawPassword()));
         } else {
-            checkSetRoles(user, roles);
+            user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         }
-
-        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         userDAO.save(user);
-        return true;
+        return Optional.ofNullable(convertToUserDTO(List.of(user)).get(0));
     }
 
-    public void checkSetRoles(User user, List<Role> roles) {
-        if (user.getRoles() == null) {
-            user.setRoles(new HashSet<>());
-        } else {
-            user.getRoles().clear();
-        }
-
-        if (user.getAdmin()){
-            user.getRoles().add(roles.get(0));
-        }
-        if (user.getUser()) {
-            user.getRoles().add(roles.get(1));
-        }
-    }
     @Transactional
     @Override
-    public void update(User updatedUser) {
-        checkSetRoles(updatedUser, roleService.findAll());
-        if (updatedUser.getPassword().isEmpty()) {
-            updatedUser.setPassword(userDAO.show(updatedUser.getId()).getPassword());
+    public Optional<UserDTO> update(User updatedUser) {
+        if (updatedUser.getRawPassword().isEmpty()) {
+            updatedUser.setPassword(show(updatedUser.getId()).get().getPassword());
         } else {
-            updatedUser.setPassword(bCryptPasswordEncoder.encode(updatedUser.getPassword()));
+            updatedUser.setPassword(bCryptPasswordEncoder.encode(updatedUser.getRawPassword()));
         }
-
         userDAO.update(updatedUser);
+        return Optional.ofNullable(convertToUserDTO(List.of(updatedUser)).get(0));
     }
+
     @Transactional
     @Override
-    public void delete(int id) {
+    public void delete(Long id) {
         userDAO.delete(id);
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userDAO.findByUsername(username);
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userDAO.findByEmail(email);
 
         if (user == null)
             throw new UsernameNotFoundException("User not found!");
 
         return user;
-    }
-
-    public BCryptPasswordEncoder getbCryptPasswordEncoder() {
-        return bCryptPasswordEncoder;
-    }
-
-    public void setbCryptPasswordEncoder(BCryptPasswordEncoder bCryptPasswordEncoder) {
-        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 }

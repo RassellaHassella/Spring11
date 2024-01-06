@@ -21,8 +21,9 @@ public class UserDAOImpl implements UserDAO {
         return query.getResultList();
     }
 
-    public User findByUsername(String username) {
-        String jpql = "SELECT u FROM User u where u.username=:param1";
+
+    public User findByEmail(String username) {
+        String jpql = "SELECT u FROM User u where u.email=:param1";
         List<User> user = entityManager.createQuery(jpql, User.class)
                 .setParameter("param1", username).getResultList();
         if (user.isEmpty()) {
@@ -33,8 +34,13 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
-    public User show(int id) {
-        return entityManager.find(User.class, id);
+    public List<User> show(Long id) {
+
+       User user = entityManager.find(User.class, id);
+        if (user == null) {
+            return null;
+        }
+        return List.of(user);
     }
 
     @Override
@@ -47,8 +53,12 @@ public class UserDAOImpl implements UserDAO {
         entityManager.merge(updatedUser);
     }
 
+
+
+
+
     @Override
-    public void delete(int id) {
+    public void delete(Long id) {
         User user = entityManager.find(User.class, id);
         entityManager.remove(user);
     }
