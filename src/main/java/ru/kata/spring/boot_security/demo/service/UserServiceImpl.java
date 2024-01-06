@@ -49,7 +49,7 @@ public class UserServiceImpl implements UserService {
         for (int i = 0; i < usersDTO.size(); i++) {
             usersDTO.get(i).getRoles().clear();
             for (Role role : users.get(i).getRoles()) {
-                usersDTO.get(i).addRoles(role.getName());
+                usersDTO.get(i).addRoles(role.getValue());
             }
         }
         return usersDTO;

@@ -6,10 +6,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 
 @Entity
@@ -28,8 +25,6 @@ public class User implements UserDetails{
     @Column(name = "email", unique = true, nullable = false)
     private String email;
 
-
-
     @Column(name = "password")
     private String password;
 
@@ -37,8 +32,8 @@ public class User implements UserDetails{
     private String rawPassword;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles",
-    joinColumns = {@JoinColumn(name = "users_id")},
-    inverseJoinColumns = {@JoinColumn(name = "roles_id")})
+            joinColumns = { @JoinColumn(name = "users_id") },
+            inverseJoinColumns = { @JoinColumn(name = "roles_id") })
     private Set<Role> roles = new HashSet<>();
 
     public User() {}
@@ -59,41 +54,6 @@ public class User implements UserDetails{
         this.rawPassword = rawPassword;
         this.roles = roles;
     }
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
-    }
-
-    @Override
-    public String getPassword() {
-        return password;
-    }
-
-    @Override
-    public String getUsername() {
-        return firstName;
-    }
-
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
 
     public Long getId() {
         return id;
@@ -103,11 +63,11 @@ public class User implements UserDetails{
         this.id = id;
     }
 
-    public String getFirstname() {
+    public String getFirstName() {
         return firstName;
     }
 
-    public void setFirstname(String firstname) {
+    public void setFirstName(String firstName) {
         this.firstName = firstName;
     }
 
@@ -139,21 +99,6 @@ public class User implements UserDetails{
         this.password = password;
     }
 
-    public String getRawPassword() {
-        return rawPassword;
-    }
-
-    public void setRawPassword(String rawPassword) {
-        this.rawPassword = rawPassword;
-    }
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
     public Set<Role> getRoles() {
         return roles;
     }
@@ -161,18 +106,66 @@ public class User implements UserDetails{
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
     }
+
     public void addRoles(Role role) {
         this.roles.add(role);
     }
 
+    public String getRawPassword() {
+        return rawPassword;
+    }
+
+    public void setRawPassword(String rawPassword) {
+        this.rawPassword = rawPassword;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return getRoles();
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String getUsername() {
+        return firstName;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+
         User user = (User) o;
-        return id == user.id && age == user.age && Objects.equals(firstName, user.firstName)
-                && Objects.equals(lastName, user.lastName) && Objects.equals(email, user.email);
+
+        if (age != user.age) return false;
+        if (!Objects.equals(id, user.id)) return false;
+        if (!Objects.equals(firstName, user.firstName)) return false;
+        if (!Objects.equals(lastName, user.lastName)) return false;
+        return Objects.equals(email, user.email);
     }
 
     @Override
@@ -184,5 +177,4 @@ public class User implements UserDetails{
         result = 31 * result + (email != null ? email.hashCode() : 0);
         return result;
     }
-
 }
