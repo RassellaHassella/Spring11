@@ -1,35 +1,39 @@
 package ru.kata.spring.boot_security.demo.utils;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.kata.spring.boot_security.demo.models.Role;
 import ru.kata.spring.boot_security.demo.models.User;
+import ru.kata.spring.boot_security.demo.repositories.RoleRepository;
+import ru.kata.spring.boot_security.demo.repositories.UserRepository;
+import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
-import ru.kata.spring.boot_security.demo.dao.RoleRepository;
+
 
 import javax.annotation.PostConstruct;
+import java.util.List;
+import java.util.Set;
 
 @Component
 public class InitDB {
 
-    private final RoleRepository roleRepository;
     private final UserService userService;
+    private final RoleRepository roleRepository;
 
-    public InitDB(RoleRepository roleRepository, UserService userService) {
+    @Autowired
+    public InitDB(UserService userService, RoleRepository roleRepository) {
         this.roleRepository = roleRepository;
         this.userService = userService;
     }
+
     @PostConstruct
-    private void PostDb(){
-        Role roleAdmin = new Role(1L, "ROLE_ADMIN");
-        Role roleUser = new Role(2L, "ROLE_USER");
-
-        roleRepository.save(roleAdmin);
-        roleRepository.save(roleUser);
-
-        User user = new User("rkr.ru@mail.ru", "Ruslan", "Kutepov", 29, "1234");
-        user.addRoles(roleAdmin);
-        user.addRoles(roleUser);
+    private void PostDb() {
+        userService.createRolesIfNotExist();
+        User user = new User("Ruslan", "Kutepov", 29, "rkr.ru@mail.ru", "1234",
+                List.of(roleRepository.getById(1L), roleRepository.getById(2L)));
         userService.save(user);
-
+        User user1 = new User("Ivan", "Ivanov", 22, "mail@mail.ru", "1234",
+                List.of(roleRepository.getById(1L)));
+        userService.save(user1);
     }
 }

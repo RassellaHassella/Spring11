@@ -9,9 +9,12 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserService extends UserDetailsService {
-    public List<UserDTO> index();
-    public Optional<UserDTO> show(Long id);
-    public Optional<UserDTO>  save(User user);
-    public Optional<UserDTO>  update(User updatedUser);
-    public void delete(Long id);
+     List<UserDTO> index();
+     Optional<UserDTO> show(Long id);
+
+     void createRolesIfNotExist();
+
+     Optional<UserDTO>  save(User user);
+     Optional<UserDTO>  update(User updatedUser);
+     void delete(Long id);
 }
