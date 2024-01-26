@@ -17,7 +17,7 @@
       <span>with roles:</span>
     </div>
     <div class="d-inline h5 fw-light" th:each="role : ${user.roles}">
-      <span th:text="${#strings.substringAfter(role.value, 'ROLE_')}">Role</span>
+      <span th:text="${#strings.substringAfter(role.role, 'ROLE_')}">Role</span>
     </div>
   </div>
   <div class="navbar-nav">

@@ -110,7 +110,7 @@ function fillModal(event, modal, actionPrefix) {
             for (const role of roles) {
                 const optionRole = document.createElement('option');
                 optionRole.value = role.id;
-                optionRole.text = role.value.slice(5);
+                optionRole.text = role.role.slice(5);
                 if (trUser.cells[5].textContent.includes(optionRole.text)) {
                     optionRole.selected = true;
                 }
@@ -271,7 +271,7 @@ buttonNewUserTab.addEventListener('click', () => {
             for (const role of roles) {
                 const optionRole = document.createElement('option');
                 optionRole.value = role.id;
-                optionRole.text = role.value.slice(5);
+                optionRole.text = role.role.slice(5);
                 selectRoles.append(optionRole);
             }
         });
