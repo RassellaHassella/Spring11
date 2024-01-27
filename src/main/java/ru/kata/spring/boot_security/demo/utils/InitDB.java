@@ -30,10 +30,10 @@ public class InitDB {
     private void PostDb() {
         userService.createRolesIfNotExist();
         User user = new User("Ruslan", "Kutepov", 29, "rkr.ru@mail.ru", "1234",
-                List.of(roleRepository.getById(1L), roleRepository.getById(2L)));
-        userService.save(user);
+                List.of(roleRepository.getById(2L), roleRepository.getById(1L)));
+        userService.add(user);
         User user1 = new User("Ivan", "Ivanov", 22, "mail@mail.ru", "1234",
                 List.of(roleRepository.getById(1L)));
-        userService.save(user1);
+        userService.add(user1);
     }
 }

@@ -145,7 +145,7 @@ editForm.addEventListener('submit', event => {
         firstName: modalUserEdit.querySelector('#editFirstName').value,
         lastName: modalUserEdit.querySelector('#editLastName').value,
         age: modalUserEdit.querySelector('#editAge').value,
-        rawPassword: modalUserEdit.querySelector('#editPassword').value,
+        password: modalUserEdit.querySelector('#editPassword').value,
     }
     const userRoles = [];
     const optionsSelectRoles = modalUserEdit.querySelector('#editRoles').getElementsByTagName('option');
@@ -218,7 +218,7 @@ createForm.addEventListener('submit', event => {
         firstName: createForm.querySelector('#newFirstName').value,
         lastName: createForm.querySelector('#newLastName').value,
         age: createForm.querySelector('#newAge').value,
-        rawPassword: createForm.querySelector('#newPassword').value,
+        password: createForm.querySelector('#newPassword').value,
     }
     const userRoles = [];
     const optionsSelectRoles = createForm.querySelector('#newRoles').getElementsByTagName('option');

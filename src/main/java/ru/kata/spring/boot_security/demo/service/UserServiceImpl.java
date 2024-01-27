@@ -1,68 +1,50 @@
 package ru.kata.spring.boot_security.demo.service;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.kata.spring.boot_security.demo.dto.UserDTO;
 import ru.kata.spring.boot_security.demo.models.Role;
 import ru.kata.spring.boot_security.demo.models.User;
 import ru.kata.spring.boot_security.demo.repositories.RoleRepository;
 import ru.kata.spring.boot_security.demo.repositories.UserRepository;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 
 @Service
-public class UserServiceImpl implements UserService {
-    private final RoleRepository roleRepository;
+public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserRepository userRepository;
-    private final BCryptPasswordEncoder bCryptPasswordEncoder;
-    private final ModelMapper modelMapper;
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final RoleRepository roleRepository;
 
     @Autowired
-    public UserServiceImpl(RoleRepository roleRepository, UserRepository userRepository,
-                           BCryptPasswordEncoder bCryptPasswordEncoder, ModelMapper modelMapper) {
-        this.roleRepository = roleRepository;
-
+    public UserServiceImpl(UserRepository userRepository, @Lazy BCryptPasswordEncoder bCryptPasswordEncoder, RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-        this.modelMapper = modelMapper;
+        this.roleRepository = roleRepository;
     }
+
 
     @Override
-    public List<UserDTO> index() {
-        return convertToUserDTO(userRepository.findAll());
-    }
-
-    private List<UserDTO> convertToUserDTO(List<User> users) {
-        List<UserDTO> usersDTO = users.stream()
-                .map(user -> modelMapper.map(user, UserDTO.class))
-                .collect(Collectors.toList());
-
-        for (int i = 0; i < usersDTO.size(); i++) {
-            usersDTO.get(i).getRoles().clear();
-            for (Role role : users.get(i).getRoles()) {
-                usersDTO.get(i).addRoles(role.getRole());
-            }
-        }
-        return usersDTO;
-    }
-
-    @Override
-    public Optional<UserDTO> show(Long id) {
-
-        if (userRepository.findById(id).isEmpty()) {
-            return Optional.of(null);
+    @Transactional
+    public User add(User user) {
+        if (userRepository.findByEmail(user.getEmail()).isPresent()){
+            System.out.println("Пользователь с таким email е существует!");
         } else {
-        return Optional.ofNullable(convertToUserDTO(List.of(userRepository.getById(id))).get(0));
+            createRolesIfNotExist();
+            user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+            userRepository.save(user);
         }
+        return user;
     }
+
     @Override
     public void createRolesIfNotExist() {
         if (roleRepository.findByRole("ROLE_USER").isEmpty()) {
@@ -72,37 +54,38 @@ public class UserServiceImpl implements UserService {
             roleRepository.save(new Role(2L, "ROLE_ADMIN"));
         }
     }
-    @Transactional
+
     @Override
-    public Optional<UserDTO> save(User user) {
-
-        if ( userRepository.findByEmail(user.getEmail()) != null) {
-            return Optional.ofNullable(null);
-        }
-
-        if (user.getPassword() == null) {
-            user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
-        }
-        userRepository.save(user);
-        return Optional.ofNullable(convertToUserDTO(List.of(user)).get(0));
+    public List<User> usersList() {
+        return userRepository.findAll();
     }
 
-    @Transactional
     @Override
-    public Optional<UserDTO> update(User user) {
-        if (user.getPassword().isEmpty()) {
-            user.setPassword(show(user.getId()).get().getPassword());
-        } else {
-            user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
-        }
-        userRepository.save(user);
-        return Optional.ofNullable(convertToUserDTO(List.of(user)).get(0));
-    }
-
     @Transactional
-    @Override
     public void delete(Long id) {
         userRepository.deleteById(id);
+    }
+
+    @Override
+    public User getUser(Long id) {
+        return userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException
+                ("Пользователь с id " + id + " не найден"));
+    }
+
+    @Override
+    public User findByEmail(String email) {
+        if (userRepository.findByEmail(email).isEmpty()) {
+            throw new EntityNotFoundException("Пользователь не найден");
+        } else {
+            return userRepository.findByEmail(email).get();
+        }
+    }
+
+
+    @Override
+    public User update(User user) {
+        userRepository.save(user);
+        return user;
     }
 
     @Override
