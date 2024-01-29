@@ -7,7 +7,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.modelmapper.ModelMapper;
+
 
 @Configuration
 @EnableWebSecurity
@@ -34,15 +34,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .formLogin().loginPage("/login")
+                .formLogin()
+                .usernameParameter("email") // указываем, что поле email будет использоваться в качестве юзернейма
+                .passwordParameter("password")
                 .successHandler(successUserHandler).permitAll()
                 .and()
                 .logout()
                 .permitAll()
                 .logoutSuccessUrl("/login").permitAll();
     }
-    @Bean
-    public ModelMapper getModelMapper(){
-        return new ModelMapper();
-    }
+
 }

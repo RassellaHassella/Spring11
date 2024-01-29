@@ -34,18 +34,17 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Override
     @Transactional
-    public User add(User user) {
+    public void add(User user) {
         if (userRepository.findByEmail(user.getEmail()).isPresent()){
-            System.out.println("Пользователь с таким email е существует!");
+            System.out.println("Пользователь с таким email уже существует!");
         } else {
             createRolesIfNotExist();
             user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
             userRepository.save(user);
         }
-        return user;
     }
 
-    @Override
+    @Transactional
     public void createRolesIfNotExist() {
         if (roleRepository.findByRole("ROLE_USER").isEmpty()) {
             roleRepository.save(new Role(1L, "ROLE_USER"));
@@ -83,9 +82,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
 
     @Override
-    public User update(User user) {
+    @Transactional
+    public void update(User user, List<Role> roles) {
         userRepository.save(user);
-        return user;
     }
 
     @Override
